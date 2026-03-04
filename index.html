@@ -356,7 +356,14 @@
       <h2 style="color:var(--accent2)">GAME OVER</h2>
       <div class="game-over-score" id="finalScore">0</div>
       <p id="gameOverMsg">Du kom til bokstav <span id="reachedLetter">B</span></p>
-      <div style="display:flex; gap:8px; margin-top:8px;">
+      <div style="margin: 14px 0 6px; text-align:center;">
+        <p style="font-size:0.65rem; color:var(--dim); letter-spacing:0.15em; margin-bottom:8px;">LAGRE TIL HIGHSCORE</p>
+        <div class="name-input-row" style="justify-content:center;">
+          <input type="text" id="playerNameInput" placeholder="Ditt navn" maxlength="12">
+          <button class="btn" onclick="saveAndShowHighscore()">LAGRE</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
         <button class="btn" onclick="startGame()">▶ PRØV IGJEN</button>
         <button class="btn" onclick="showHighscore()">🏆 HIGHSCORE</button>
       </div>
@@ -373,7 +380,14 @@
       <h2 style="color:var(--accent3)">🎉 PERFEKT!</h2>
       <p>Du spiste hele alfabetet!</p>
       <div class="game-over-score" style="color:var(--accent3)" id="winScore">2600</div>
-      <div style="display:flex; gap:8px; margin-top:8px;">
+      <div style="margin: 14px 0 6px; text-align:center;">
+        <p style="font-size:0.65rem; color:var(--dim); letter-spacing:0.15em; margin-bottom:8px;">LAGRE TIL HIGHSCORE</p>
+        <div class="name-input-row" style="justify-content:center;">
+          <input type="text" id="playerNameInputWin" placeholder="Ditt navn" maxlength="12">
+          <button class="btn" onclick="saveAndShowHighscore('win')">LAGRE</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
         <button class="btn" onclick="startGame()">▶ SPILL IGJEN</button>
         <button class="btn" onclick="showHighscore()">🏆 HIGHSCORE</button>
       </div>
@@ -403,13 +417,6 @@
 <!-- Highscore panel -->
 <div id="highscorePanel" class="hidden">
   <h2>🏆 HIGHSCORE</h2>
-  <div id="saveScoreSection" class="hidden" style="text-align:center; margin-bottom:16px;">
-    <p style="color:var(--accent); font-size:0.75rem; margin-bottom:10px; letter-spacing:0.1em;">LAGRE DIN POENGSUM: <strong id="saveScoreVal">0</strong></p>
-    <div class="name-input-row">
-      <input type="text" id="playerNameInput" placeholder="Ditt navn" maxlength="12">
-      <button class="btn" onclick="saveScore()">LAGRE</button>
-    </div>
-  </div>
   <table class="score-table">
     <thead>
       <tr>
@@ -714,30 +721,14 @@ function draw() {
 
   // Draw letters on board
   Object.entries(letters).forEach(([ch, pos]) => {
-    const isTarget = ch === ALPHABET[nextLetterIdx];
     const color = letterColors[ch];
-
-    if (isTarget) {
-      // Glowing target
-      const t = Date.now() / 600;
-      const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2);
-      ctx.shadowBlur = 15 + pulse * 10;
-      ctx.shadowColor = color;
-      ctx.fillStyle = color;
-      ctx.globalAlpha = 0.15 + pulse * 0.1;
-      ctx.fillRect(pos.x*CELL, pos.y*CELL, CELL, CELL);
-      ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
-    }
 
     ctx.font = `bold ${CELL-2}px 'Space Mono', monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowBlur = isTarget ? 8 : 0;
-    ctx.shadowColor = color;
-    ctx.fillStyle = isTarget ? color : `rgba(${hexToRgb(color)},0.45)`;
-    ctx.fillText(ch, pos.x*CELL + CELL/2, pos.y*CELL + CELL/2 + 1);
     ctx.shadowBlur = 0;
+    ctx.fillStyle = `rgba(${hexToRgb(color)},0.45)`;
+    ctx.fillText(ch, pos.x*CELL + CELL/2, pos.y*CELL + CELL/2 + 1);
   });
 
   // Draw snake
@@ -836,12 +827,6 @@ function hideAllOverlays() {
 
 function showHighscore() {
   document.getElementById('highscorePanel').classList.remove('hidden');
-  if (pendingSave) {
-    document.getElementById('saveScoreSection').classList.remove('hidden');
-    document.getElementById('saveScoreVal').textContent = pendingSave.score;
-  } else {
-    document.getElementById('saveScoreSection').classList.add('hidden');
-  }
   loadHighscores();
 }
 window.showHighscore = showHighscore;
@@ -892,22 +877,35 @@ async function loadHighscores() {
 }
 window.loadHighscores = loadHighscores;
 
-async function saveScore() {
-  if (!pendingSave) return;
-  const name = document.getElementById('playerNameInput').value.trim() || 'Anonym';
+async function saveAndShowHighscore(source) {
+  const inputId = source === 'win' ? 'playerNameInputWin' : 'playerNameInput';
+  const name = document.getElementById(inputId).value.trim() || 'Anonym';
+  if (!pendingSave) { showHighscore(); return; }
 
-  // Try Firebase first
-  let saved = false;
-  if (window._saveToFirebase) {
-    saved = await window._saveToFirebase(name, pendingSave.score, pendingSave.reached);
-  }
-
-  // Always also save to localStorage as fallback
+  // Save locally
   const local = JSON.parse(localStorage.getItem('alphabetSnakeScores') || '[]');
   local.push({ name, score: pendingSave.score, reached: pendingSave.reached, ts: Date.now() });
   local.sort((a,b) => b.score - a.score);
   localStorage.setItem('alphabetSnakeScores', JSON.stringify(local.slice(0,20)));
 
+  // Save to Firebase
+  if (window._saveToFirebase) {
+    await window._saveToFirebase(name, pendingSave.score, pendingSave.reached);
+  }
+
+  pendingSave = null;
+  showHighscore();
+}
+window.saveAndShowHighscore = saveAndShowHighscore;
+
+async function saveScore() {
+  if (!pendingSave) return;
+  const name = document.getElementById('playerNameInput').value.trim() || 'Anonym';
+  const local = JSON.parse(localStorage.getItem('alphabetSnakeScores') || '[]');
+  local.push({ name, score: pendingSave.score, reached: pendingSave.reached, ts: Date.now() });
+  local.sort((a,b) => b.score - a.score);
+  localStorage.setItem('alphabetSnakeScores', JSON.stringify(local.slice(0,20)));
+  if (window._saveToFirebase) await window._saveToFirebase(name, pendingSave.score, pendingSave.reached);
   pendingSave = null;
   document.getElementById('saveScoreSection').classList.add('hidden');
   await loadHighscores();
