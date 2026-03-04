@@ -3,619 +3,948 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Multiplikasjonstabellen</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>ALFABET SLANGEN</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap');
+
   :root {
-    --bg: #0f0e17;
-    --accent: #ff6b6b;
-    --gold: #ffd166;
-    --green: #06d6a0;
-    --blue: #118ab2;
-    --white: #fffffe;
-    --card: rgba(255,255,255,0.06);
+    --bg: #0a0a0f;
+    --panel: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #ff3366;
+    --accent3: #ffcc00;
+    --text: #e0e0e0;
+    --dim: #555577;
+    --glow: 0 0 20px rgba(0,255,136,0.4);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: 'Nunito', sans-serif;
     background: var(--bg);
-    color: var(--white);
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* STARS BACKGROUND */
-  .stars {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-  }
-  .star {
-    position: absolute;
-    background: white;
-    border-radius: 50%;
-    animation: twinkle var(--d) infinite alternate;
-    opacity: 0.4;
-  }
-  @keyframes twinkle { to { opacity: 0.05; } }
-
-  /* TIMER */
-  #timer {
-    position: fixed;
-    top: 24px;
-    left: 28px;
-    font-family: 'Fredoka One', cursive;
-    font-size: 2.2rem;
-    color: var(--gold);
-    z-index: 100;
-    text-shadow: 0 0 20px rgba(255,209,102,0.5);
-    letter-spacing: 1px;
-  }
-  #timer span { font-size: 1rem; opacity: 0.7; display: block; line-height: 1; }
-
-  /* SCORE */
-  #score-display {
-    position: fixed;
-    top: 24px;
-    right: 28px;
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.4rem;
-    color: var(--green);
-    z-index: 100;
-    text-align: right;
-    text-shadow: 0 0 15px rgba(6,214,160,0.4);
-  }
-  #score-display span { font-size: 0.8rem; display: block; opacity: 0.7; }
-
-  /* GROWING CIRCLE */
-  #circle {
-    position: fixed;
-    border-radius: 50%;
-    background: radial-gradient(circle, #c1121f 0%, #e63946 60%, #ff4d6d 100%);
-    transform: translate(-50%, -50%);
-    left: 50%;
-    top: 50%;
-    box-shadow: 0 0 60px rgba(230, 57, 70, 0.4), 0 0 120px rgba(230, 57, 70, 0.2);
-    z-index: 1;
-    transition: width 0.1s linear, height 0.1s linear;
-  }
-
-  /* GAME AREA */
-  #game-area {
-    position: relative;
-    z-index: 10;
-    text-align: center;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0;
-  }
-
-  #question {
-    font-family: 'Fredoka One', cursive;
-    font-size: clamp(3.5rem, 9vw, 7rem);
-    color: var(--white);
-    text-shadow: 0 4px 30px rgba(255,255,255,0.3);
-    letter-spacing: 4px;
+    overflow: hidden;
     position: relative;
-    z-index: 20;
-    margin-bottom: 48px;
-    user-select: none;
   }
 
-  #answers {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    justify-content: center;
-    position: relative;
-    z-index: 20;
-  }
-
-  .answer-btn {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.8rem;
-    padding: 16px 28px;
-    min-width: 88px;
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 16px;
-    color: var(--white);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    backdrop-filter: blur(10px);
-    user-select: none;
-  }
-  .answer-btn:hover {
-    background: rgba(255,255,255,0.2);
-    border-color: rgba(255,255,255,0.5);
-    transform: translateY(-4px) scale(1.07);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  }
-  .answer-btn:active { transform: scale(0.97); }
-  .answer-btn.correct {
-    background: var(--green);
-    border-color: var(--green);
-    animation: pulse-green 0.3s ease;
-  }
-  .answer-btn.wrong {
-    background: var(--accent);
-    border-color: var(--accent);
-    animation: shake 0.3s ease;
-  }
-
-  @keyframes pulse-green {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-    100% { transform: scale(1); }
-  }
-  @keyframes shake {
-    0%,100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    75% { transform: translateX(8px); }
-  }
-
-  /* SPEED INDICATOR */
-  #speed-indicator {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Fredoka One', cursive;
-    font-size: 1rem;
-    color: rgba(255,255,255,0.4);
-    z-index: 100;
-    letter-spacing: 1px;
-  }
-  .speed-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    margin: 0 3px;
-    background: rgba(255,255,255,0.2);
-    transition: background 0.3s;
-  }
-  .speed-dot.active { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
-
-  /* OVERLAYS */
-  .overlay {
+  body::before {
+    content: '';
     position: fixed;
     inset: 0;
-    z-index: 200;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(0,255,136,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(255,51,102,0.04) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-shadow: var(--glow);
+    margin: 16px 0 4px;
+  }
+
+  .subtitle {
+    font-size: 0.7rem;
+    color: var(--dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .game-wrapper {
     display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 0 16px;
+  }
+
+  .side-panel {
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .panel-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+  }
+
+  .panel-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .panel-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    color: var(--accent);
+    text-shadow: var(--glow);
+    line-height: 1;
+  }
+
+  .next-letter {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--accent3);
+    text-shadow: 0 0 20px rgba(255,204,0,0.5);
+    text-align: center;
+  }
+
+  .controls-info {
+    font-size: 0.6rem;
+    color: var(--dim);
+    line-height: 1.8;
+  }
+
+  .controls-info span {
+    color: var(--accent);
+  }
+
+  #gameCanvas {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: block;
+    background: #0c0c14;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 80px rgba(0,0,0,0.3);
+  }
+
+  /* Overlay screens */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(8px);
-    animation: fadeIn 0.3s ease;
-  }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-  .overlay-box {
-    background: linear-gradient(145deg, #1a1a2e, #16213e);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 28px;
-    padding: 48px 56px;
-    text-align: center;
-    max-width: 480px;
-    width: 90%;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    background: rgba(8,8,14,0.92);
+    z-index: 100;
+    backdrop-filter: blur(4px);
   }
 
-  .overlay-box h1 {
-    font-family: 'Fredoka One', cursive;
+  .overlay.hidden { display: none; }
+
+  .overlay h2 {
+    font-family: 'Bebas Neue', sans-serif;
     font-size: 3rem;
+    letter-spacing: 0.1em;
     margin-bottom: 8px;
   }
-  .overlay-box .subtitle {
-    font-size: 1rem;
-    opacity: 0.6;
-    margin-bottom: 28px;
-  }
-  .overlay-box .stat {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.5rem;
-    color: var(--gold);
-    margin: 8px 0;
-  }
-  .overlay-box .stat span { font-family: 'Nunito', sans-serif; font-size: 0.9rem; color: rgba(255,255,255,0.5); display: block; }
 
-  .name-input {
-    width: 100%;
-    padding: 14px 20px;
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.4rem;
-    background: rgba(255,255,255,0.08);
-    border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 14px;
-    color: var(--white);
-    text-align: center;
-    margin: 20px 0 16px;
-    outline: none;
-    transition: border-color 0.2s;
+  .overlay p {
+    color: var(--dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
   }
-  .name-input:focus { border-color: var(--gold); }
-  .name-input::placeholder { color: rgba(255,255,255,0.25); }
 
-  .btn-primary {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.4rem;
-    padding: 16px 40px;
-    background: linear-gradient(135deg, var(--gold), #f4a261);
-    border: none;
-    border-radius: 14px;
-    color: #1a1a2e;
+  .btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 10px 28px;
     cursor: pointer;
     transition: all 0.2s;
-    width: 100%;
-    letter-spacing: 1px;
-    box-shadow: 0 8px 24px rgba(255,209,102,0.3);
+    margin: 4px;
   }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(255,209,102,0.4); }
-  .btn-primary:active { transform: scale(0.98); }
 
-  /* HIGH SCORE TABLE */
-  .hs-table {
-    width: 100%;
-    margin: 16px 0;
+  .btn:hover {
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: var(--glow);
+  }
+
+  .btn-danger {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  .btn-danger:hover {
+    background: var(--accent2);
+    color: white;
+    box-shadow: 0 0 20px rgba(255,51,102,0.4);
+  }
+
+  /* Highscore */
+  #highscorePanel {
+    position: fixed;
+    inset: 0;
+    background: rgba(8,8,14,0.96);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+  }
+
+  #highscorePanel.hidden { display: none; }
+
+  #highscorePanel h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    color: var(--accent3);
+    text-shadow: 0 0 20px rgba(255,204,0,0.4);
+    letter-spacing: 0.15em;
+    margin-bottom: 20px;
+  }
+
+  .score-table {
+    width: 380px;
     border-collapse: collapse;
+    margin-bottom: 20px;
   }
-  .hs-table th {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: rgba(255,255,255,0.4);
-    padding: 6px 8px;
+
+  .score-table th {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--dim);
     text-align: left;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
   }
-  .hs-table td {
-    padding: 8px 8px;
-    font-size: 1rem;
-    border-top: 1px solid rgba(255,255,255,0.06);
+
+  .score-table td {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    border-bottom: 1px solid rgba(30,30,46,0.5);
   }
-  .hs-table .rank { color: var(--gold); font-family: 'Fredoka One', cursive; width: 32px; }
-  .hs-table .hs-name { font-weight: 700; }
-  .hs-table .hs-time { color: var(--green); font-family: 'Fredoka One', cursive; text-align: right; }
-  .hs-table .hs-correct { color: rgba(255,255,255,0.5); text-align: right; font-size: 0.85rem; }
-  .new-entry td { background: rgba(255,209,102,0.08); }
 
-  #start-screen h1 { color: var(--gold); }
-  #gameover-screen h1 { color: var(--accent); }
+  .score-table tr:first-child td { color: var(--accent3); }
+  .score-table tr:nth-child(2) td { color: var(--dim); }
+  .score-table tr:nth-child(3) td { color: #cd7f32; }
 
-  .game-over-reason {
-    font-size: 1rem;
-    color: rgba(255,255,255,0.5);
+  .rank-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    color: var(--dim);
+    width: 32px;
+  }
+
+  .name-input-row {
+    display: flex;
+    gap: 8px;
     margin-bottom: 16px;
+    align-items: center;
   }
+
+  .name-input-row input {
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    padding: 8px 14px;
+    outline: none;
+    letter-spacing: 0.1em;
+    width: 180px;
+  }
+
+  .name-input-row input::placeholder { color: var(--dim); }
+
+  .loading-text {
+    color: var(--dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .snake-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    word-break: break-all;
+    max-width: 155px;
+    line-height: 1.4;
+    text-shadow: var(--glow);
+  }
+
+  .game-over-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    color: var(--accent2);
+    text-shadow: 0 0 30px rgba(255,51,102,0.5);
+    line-height: 1;
+    margin: 8px 0;
+  }
+
+  .firebase-badge {
+    font-size: 0.55rem;
+    color: var(--dim);
+    letter-spacing: 0.15em;
+    margin-top: 8px;
+  }
+
+  .firebase-badge span { color: #ff9800; }
 </style>
 </head>
 <body>
 
-<div class="stars" id="stars"></div>
+<h1>ALFABET SLANGEN</h1>
+<p class="subtitle">spis bokstavene i riktig rekkefølge</p>
 
-<!-- Timer & Score -->
-<div id="timer"><span>TID</span><span id="time-val">0.0s</span></div>
-<div id="score-display"><span>RIKTIGE</span><span id="correct-val">0</span></div>
-
-<!-- Growing Red Circle -->
-<div id="circle"></div>
-
-<!-- Game Area -->
-<div id="game-area">
-  <div id="question">7 × 8</div>
-  <div id="answers"></div>
-</div>
-
-<!-- Speed indicator -->
-<div id="speed-indicator">
-  FART:
-  <span class="speed-dot active" id="dot1"></span>
-  <span class="speed-dot" id="dot2"></span>
-  <span class="speed-dot" id="dot3"></span>
-  <span class="speed-dot" id="dot4"></span>
-  <span class="speed-dot" id="dot5"></span>
-</div>
-
-<!-- START SCREEN -->
-<div class="overlay" id="start-screen">
-  <div class="overlay-box">
-    <h1>✖️ Gangetabellen</h1>
-    <p class="subtitle">Velg riktig svar før sirkelen tar deg!</p>
-    <div style="margin: 24px 0; text-align:left; font-size:0.95rem; opacity:0.7; line-height:1.8;">
-      🎯 Trykk riktig svar<br>
-      ⏱️ Timeren teller opp<br>
-      🔴 Sirkelen vokser fortere for hvert 3. svar<br>
-      💀 Feil svar = Game Over<br>
-      💀 Sirkelen &gt; 70% = Game Over
+<div class="game-wrapper">
+  <!-- Left panel -->
+  <div class="side-panel">
+    <div class="panel-box">
+      <div class="panel-label">Tid</div>
+      <div class="panel-value" id="timeDisplay">0s</div>
     </div>
-    <button class="btn-primary" onclick="startGame()">START SPILLET</button>
-    <div id="start-highscore" style="margin-top:24px;"></div>
+    <div class="panel-box">
+      <div class="panel-label">Poeng</div>
+      <div class="panel-value" id="scoreDisplay">0</div>
+    </div>
+
+    <div class="panel-box">
+      <div class="panel-label">Slangen</div>
+      <div class="snake-display" id="snakeDisplay">A</div>
+    </div>
+    <div class="panel-box">
+      <div class="panel-label">Kontroller</div>
+      <div class="controls-info">
+        <span>↑↓←→</span> beveg<br>
+        <span>WASD</span> beveg<br>
+        <span>P</span> pause<br>
+        <span>H</span> highscore
+      </div>
+    </div>
+    <button class="btn" onclick="showHighscore()">🏆 Highscore</button>
+  </div>
+
+  <!-- Canvas container -->
+  <div style="position:relative;">
+    <canvas id="gameCanvas" width="520" height="520"></canvas>
+
+    <!-- Start overlay -->
+    <div class="overlay" id="startOverlay">
+      <h2 style="color:var(--accent)">ALFABET<br>SLANGEN</h2>
+      <p>Spis bokstavene A→B→C→…→Z i riktig rekkefølge</p>
+      <p style="color:var(--accent3); margin-bottom:20px;">Du begynner som «A» — bli til hele alfabetet!</p>
+      <button class="btn" onclick="startGame()">▶ START SPILL</button>
+      <button class="btn" style="margin-top:4px;" onclick="showHighscore()">🏆 Highscore</button>
+    </div>
+
+    <!-- Game over overlay -->
+    <div class="overlay hidden" id="gameOverOverlay">
+      <h2 style="color:var(--accent2)">GAME OVER</h2>
+      <div class="game-over-score" id="finalScore">0</div>
+      <p id="gameOverMsg">Du kom til bokstav <span id="reachedLetter">B</span></p>
+      <div style="margin: 14px 0 6px; text-align:center;">
+        <p style="font-size:0.65rem; color:var(--dim); letter-spacing:0.15em; margin-bottom:8px;">LAGRE TIL HIGHSCORE</p>
+        <div class="name-input-row" style="justify-content:center;">
+          <input type="text" id="playerNameInput" placeholder="Ditt navn" maxlength="12">
+          <button class="btn" onclick="saveAndShowHighscore()">LAGRE</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn" onclick="startGame()">▶ PRØV IGJEN</button>
+        <button class="btn" onclick="showHighscore()">🏆 HIGHSCORE</button>
+      </div>
+    </div>
+
+    <!-- Pause overlay -->
+    <div class="overlay hidden" id="pauseOverlay">
+      <h2 style="color:var(--dim)">PAUSE</h2>
+      <button class="btn" onclick="togglePause()">▶ FORTSETT</button>
+    </div>
+
+    <!-- Win overlay -->
+    <div class="overlay hidden" id="winOverlay">
+      <h2 style="color:var(--accent3)">🎉 PERFEKT!</h2>
+      <p>Du spiste hele alfabetet!</p>
+      <div class="game-over-score" style="color:var(--accent3)" id="winScore">2600</div>
+      <div style="margin: 14px 0 6px; text-align:center;">
+        <p style="font-size:0.65rem; color:var(--dim); letter-spacing:0.15em; margin-bottom:8px;">LAGRE TIL HIGHSCORE</p>
+        <div class="name-input-row" style="justify-content:center;">
+          <input type="text" id="playerNameInputWin" placeholder="Ditt navn" maxlength="12">
+          <button class="btn" onclick="saveAndShowHighscore('win')">LAGRE</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn" onclick="startGame()">▶ SPILL IGJEN</button>
+        <button class="btn" onclick="showHighscore()">🏆 HIGHSCORE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="side-panel">
+    <div class="panel-box">
+      <div class="panel-label">Rekord</div>
+      <div class="panel-value" id="localBest">0</div>
+    </div>
+    <div class="panel-box">
+      <div class="panel-label">Hastighet</div>
+      <div class="panel-value" id="speedDisplay">1</div>
+    </div>
+    <div class="panel-box" style="min-height:160px;">
+      <div class="panel-label">Top 3</div>
+      <div id="miniLeaderboard" style="font-size:0.65rem; color:var(--dim); line-height:2;">
+        <span class="loading-text">Laster...</span>
+      </div>
+    </div>
+    <button class="btn btn-danger" onclick="if(confirm('Sikker?')) resetLocalBest()">Reset lokal</button>
   </div>
 </div>
 
-<!-- GAME OVER SCREEN -->
-<div class="overlay" id="gameover-screen" style="display:none;">
-  <div class="overlay-box">
-    <h1>💥 Game Over</h1>
-    <p class="game-over-reason" id="gameover-reason">Du svarte feil!</p>
-    <div class="stat" id="go-time">0.0s <span>total tid</span></div>
-    <div class="stat" id="go-correct">0 <span>riktige svar</span></div>
-    <input class="name-input" id="player-name" placeholder="Skriv inn navn..." maxlength="16" />
-    <button class="btn-primary" onclick="saveScore()">LAGRE & SE HIGHSCORE</button>
+<!-- Highscore panel -->
+<div id="highscorePanel" class="hidden">
+  <h2>🏆 HIGHSCORE</h2>
+  <table class="score-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Navn</th>
+        <th>Poeng</th>
+        <th>Kom til</th>
+      </tr>
+    </thead>
+    <tbody id="leaderboardBody">
+      <tr><td colspan="4" style="text-align:center; color:var(--dim)"><span class="loading-text">Laster highscore...</span></td></tr>
+    </tbody>
+  </table>
+  <div style="display:flex; gap:8px;">
+    <button class="btn" onclick="closeHighscore()">← TILBAKE</button>
+    <button class="btn" onclick="loadHighscores()">↻ OPPDATER</button>
   </div>
+  <p class="firebase-badge">Drevet av <span>Firebase</span> Realtime Database</p>
 </div>
 
-<!-- HIGH SCORE SCREEN -->
-<div class="overlay" id="highscore-screen" style="display:none;">
-  <div class="overlay-box" style="max-width:520px;">
-    <h1 style="color:var(--gold);">🏆 Highscore</h1>
-    <p class="subtitle">Flest riktige svar vinner!</p>
-    <div id="hs-table-container"></div>
-    <button class="btn-primary" onclick="restartGame()">SPILL IGJEN</button>
-  </div>
-</div>
-
+<!-- Firebase -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ---- FIREBASE ----
-const firebaseConfig = {
-  apiKey: "AIzaSyB6akwXADcbGDBKDlzrp8ezzeunVpa0TQY",
-  authDomain: "gangesirkel.firebaseapp.com",
-  projectId: "gangesirkel",
-  storageBucket: "gangesirkel.firebasestorage.app",
-  messagingSenderId: "861422175548",
-  appId: "1:861422175548:web:c0df04c2f99e5c9475ca39"
-};
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
+  // ── Firebase config ──────────────────────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyBY_mjk93S8G3VInAxDgqvpVSNHutvIfro",
+    authDomain: "slangalfabetet.firebaseapp.com",
+    projectId: "slangalfabetet",
+    storageBucket: "slangalfabetet.firebasestorage.app",
+    messagingSenderId: "963023189742",
+    appId: "1:963023189742:web:c567ae796b530bf8b0e5ff"
+  };
 
-async function fbSaveScore(name, correct, time) {
-  await addDoc(collection(db, "highscores"), { name, correct, time, ts: Date.now() });
-}
+  let db = null;
 
-async function fbGetScores() {
-  const q = query(collection(db, "highscores"), orderBy("correct", "desc"), orderBy("time", "asc"), limit(10));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => d.data());
-}
-
-// ---- HELPERS ----
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function renderTable(scores, newEntry) {
-  if (!scores.length) return '<p style="opacity:0.5;text-align:center;padding:16px;">Ingen rekorder ennå!</p>';
-  let html = '<table class="hs-table"><tr><th>#</th><th>Navn</th><th>Riktige</th><th>Tid</th></tr>';
-  scores.forEach((s, i) => {
-    const isNew = newEntry && s.name === newEntry.name && s.correct === newEntry.correct && Math.abs(s.time - newEntry.time) < 0.5;
-    html += `<tr class="${isNew ? 'new-entry' : ''}">
-      <td class="rank">${i+1}</td>
-      <td class="hs-name">${escHtml(s.name)}${isNew ? ' ⭐' : ''}</td>
-      <td class="hs-correct">${s.correct}</td>
-      <td class="hs-time">${parseFloat(s.time).toFixed(1)}s</td>
-    </tr>`;
-  });
-  return html + '</table>';
-}
-
-// ---- STARS ----
-(function() {
-  const c = document.getElementById('stars');
-  for (let i = 0; i < 80; i++) {
-    const s = document.createElement('div');
-    s.className = 'star';
-    const size = Math.random() * 2.5 + 0.5;
-    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${(Math.random()*3+1).toFixed(1)}s`;
-    c.appendChild(s);
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    console.log("Firestore initialized");
+  } catch(e) {
+    console.warn("Firebase init failed – running in offline mode:", e.message);
   }
-})();
 
-// ---- STATE ----
-let gameActive = false;
-let startTime = 0;
-let timerInterval = null;
-let correctAnswer = 0;
-let solvedCount = 0;
-let currentRadius = 0;
-let baseGrowSpeed = 0.15;
-let growSpeed = baseGrowSpeed;
-let lastTime = 0;
-let animFrame = null;
+  window._saveToFirebase = async function(name, score, reached) {
+    if (!db) return false;
+    try {
+      await addDoc(collection(db, 'scores'), {
+        name: name.trim().substring(0, 12) || 'Anonym',
+        score,
+        reached,
+        ts: Date.now()
+      });
+      return true;
+    } catch(e) {
+      console.warn("Firestore save failed:", e.message);
+      return false;
+    }
+  };
 
-const circle = document.getElementById('circle');
-const questionEl = document.getElementById('question');
-const answersEl = document.getElementById('answers');
-const timeVal = document.getElementById('time-val');
-const correctVal = document.getElementById('correct-val');
+  window._loadFromFirebase = async function() {
+    if (!db) return null;
+    try {
+      const q = query(collection(db, 'scores'), orderBy('score', 'desc'), limit(10));
+      const snap = await getDocs(q);
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch(e) {
+      console.warn("Firestore load failed:", e.message);
+      return null;
+    }
+  };
+</script>
 
-// ---- LOAD SCORES ON START SCREEN ----
-let cachedScores = [];
+<script>
+// ── Game constants ─────────────────────────────────────────────────────────────
+const CELL = 20;
+const COLS = 26;
+const ROWS = 26;
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-// Last highscores til startskjerm
-fbGetScores().then(scores => {
-  cachedScores = scores;
-  if (!scores.length) return;
-  document.getElementById('start-highscore').innerHTML =
-    '<p style="font-size:0.8rem;opacity:0.5;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Tidligere rekorder</p>' +
-    renderTable(scores.slice(0, 5), null);
-}).catch(() => {});
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-// ---- GAME ----
-window.startGame = function() {
-  document.getElementById('start-screen').style.display = 'none';
-  document.getElementById('gameover-screen').style.display = 'none';
-  document.getElementById('highscore-screen').style.display = 'none';
+// Resize canvas to fit COLS×ROWS cells
+canvas.width = COLS * CELL;
+canvas.height = ROWS * CELL;
 
-  solvedCount = 0;
-  currentRadius = 0;
-  growSpeed = baseGrowSpeed;
-  correctVal.textContent = '0';
-  timeVal.textContent = '0.0s';
+// ── Game state ─────────────────────────────────────────────────────────────────
+let snake, dir, nextDir, letters, score, nextLetterIdx, gameLoop, timerLoop, paused;
+let secondsElapsed = 0;
+let wrongLetterFlash = null;
+let gameRunning = false;
+let pendingSave = null;
+let localBest = parseInt(localStorage.getItem('alphabetSnakeBest') || '0');
 
-  updateSpeedDots();
-  circle.style.width = '0px';
-  circle.style.height = '0px';
+document.getElementById('localBest').textContent = localBest;
 
-  gameActive = true;
-  startTime = performance.now();
-  newQuestion();
+// ── Colour palette for letters ─────────────────────────────────────────────────
+const letterColors = {};
+ALPHABET.split('').forEach((ch, i) => {
+  const hue = (i / 26) * 300 + 30;
+  letterColors[ch] = `hsl(${hue}, 90%, 62%)`;
+});
 
-  if (animFrame) cancelAnimationFrame(animFrame);
-  lastTime = performance.now();
-  animFrame = requestAnimationFrame(growLoop);
+// ── Direction helpers ──────────────────────────────────────────────────────────
+const DIRS = { UP:[0,-1], DOWN:[0,1], LEFT:[-1,0], RIGHT:[1,0] };
 
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(updateTimer, 100);
+function opposite(a, b) {
+  return a[0]+b[0]===0 && a[1]+b[1]===0;
 }
 
-function updateTimer() {
-  if (!gameActive) return;
-  timeVal.textContent = ((performance.now() - startTime) / 1000).toFixed(1) + 's';
+// ── Input ──────────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const map = {
+    ArrowUp:DIRS.UP, ArrowDown:DIRS.DOWN, ArrowLeft:DIRS.LEFT, ArrowRight:DIRS.RIGHT,
+    w:DIRS.UP, s:DIRS.DOWN, a:DIRS.LEFT, d:DIRS.RIGHT,
+    W:DIRS.UP, S:DIRS.DOWN, A:DIRS.LEFT, D:DIRS.RIGHT
+  };
+  if (map[e.key] && !opposite(map[e.key], dir)) {
+    nextDir = map[e.key];
+    e.preventDefault();
+  }
+  if (e.key === 'p' || e.key === 'P') togglePause();
+  if (e.key === 'h' || e.key === 'H') showHighscore();
+});
+
+// Mobile swipe
+let touchStart = null;
+canvas.addEventListener('touchstart', e => { touchStart = e.touches[0]; }, {passive:true});
+canvas.addEventListener('touchend', e => {
+  if (!touchStart) return;
+  const dx = e.changedTouches[0].clientX - touchStart.clientX;
+  const dy = e.changedTouches[0].clientY - touchStart.clientY;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    const d = dx > 0 ? DIRS.RIGHT : DIRS.LEFT;
+    if (!opposite(d, dir)) nextDir = d;
+  } else {
+    const d = dy > 0 ? DIRS.DOWN : DIRS.UP;
+    if (!opposite(d, dir)) nextDir = d;
+  }
+}, {passive:true});
+
+// ── Init game ──────────────────────────────────────────────────────────────────
+function startGame() {
+  hideAllOverlays();
+  gameRunning = true;
+  paused = false;
+  score = 0;
+  secondsElapsed = 0;
+  wrongLetterFlash = null;
+  nextLetterIdx = 1; // next to eat is 'B' (index 1)
+
+  // Snake starts as ['A'] in the middle
+  snake = [{x: Math.floor(COLS/2), y: Math.floor(ROWS/2)}];
+  dir = DIRS.RIGHT;
+  nextDir = DIRS.RIGHT;
+
+  // Scatter all letters B-Z on the board
+  letters = {};
+  placeLetter('B');
+  // Place remaining letters randomly
+  for (let i = 2; i < 26; i++) {
+    placeRandomLetter(ALPHABET[i]);
+  }
+
+  updateUI();
+  clearInterval(gameLoop);
+  clearInterval(timerLoop);
+  gameLoop = setInterval(tick, getSpeed());
+  timerLoop = setInterval(() => {
+    if (!paused && gameRunning) {
+      secondsElapsed++;
+      score += 3;
+      updateUI();
+    }
+  }, 1000);
 }
 
-function growLoop(now) {
-  if (!gameActive) return;
-  const dt = now - lastTime;
-  lastTime = now;
+function getSpeed() {
+  // Speed increases as snake grows
+  const base = 180;
+  const faster = Math.floor(nextLetterIdx / 4) * 12;
+  return Math.max(80, base - faster);
+}
 
-  currentRadius += growSpeed * (dt / 16.67);
-  circle.style.width = (currentRadius * 2) + 'px';
-  circle.style.height = (currentRadius * 2) + 'px';
+function placeRandomLetter(ch) {
+  let x, y, tries = 0;
+  do {
+    x = Math.floor(Math.random() * COLS);
+    y = Math.floor(Math.random() * ROWS);
+    tries++;
+  } while ((isOccupied(x,y) || letterAt(x,y)) && tries < 200);
+  letters[ch] = {x, y};
+}
 
-  const screenArea = window.innerWidth * window.innerHeight;
-  const circleArea = Math.PI * currentRadius * currentRadius;
-  if (circleArea / screenArea > 0.70) {
-    gameOver('Sirkelen ble for stor!');
+function placeLetter(ch) {
+  // Place the NEXT target letter somewhat randomly but not on snake
+  let x, y, tries = 0;
+  do {
+    x = Math.floor(Math.random() * COLS);
+    y = Math.floor(Math.random() * ROWS);
+    tries++;
+  } while ((isOccupied(x,y) || letterAt(x,y)) && tries < 200);
+  letters[ch] = {x, y};
+}
+
+function isOccupied(x, y) {
+  return snake.some(s => s.x===x && s.y===y);
+}
+
+function letterAt(x, y) {
+  return Object.values(letters).some(l => l.x===x && l.y===y);
+}
+
+// ── Game tick ──────────────────────────────────────────────────────────────────
+function tick() {
+  if (paused || !gameRunning) return;
+
+  dir = nextDir;
+  const head = {x: snake[0].x + dir[0], y: snake[0].y + dir[1]};
+
+  // Wall collision
+  if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+    endGame(); return;
+  }
+  // Self collision
+  if (snake.some(s => s.x===head.x && s.y===head.y)) {
+    endGame(); return;
+  }
+
+  const nextTarget = ALPHABET[nextLetterIdx];
+  const target = letters[nextTarget];
+
+  // Check if snake head hits ANY letter
+  const hitLetter = Object.entries(letters).find(([ch, pos]) => pos.x === head.x && pos.y === head.y);
+  if (hitLetter) {
+    const [hitCh] = hitLetter;
+    if (hitCh !== nextTarget) {
+      // Wrong letter eaten — game over!
+      wrongLetterFlash = hitCh;
+      endGame(); return;
+    }
+  }
+
+  let ate = false;
+  if (target && head.x === target.x && head.y === target.y) {
+    // Correct letter eaten!
+    ate = true;
+    delete letters[nextTarget];
+    score += 100;
+    nextLetterIdx++;
+
+    // Check win
+    if (nextLetterIdx >= 26) {
+      snake.unshift(head);
+      score += 500; // bonus
+      clearInterval(gameLoop);
+      clearInterval(timerLoop);
+      gameRunning = false;
+      document.getElementById('winScore').textContent = score;
+      document.getElementById('winOverlay').classList.remove('hidden');
+      updateLocalBest(score);
+      pendingSave = { score, reached: 'Z (FULL!)' };
+      return;
+    }
+
+    // Speed up check
+    clearInterval(gameLoop);
+    clearInterval(timerLoop);
+    gameLoop = setInterval(tick, getSpeed());
+    timerLoop = setInterval(() => {
+      if (!paused && gameRunning) {
+        secondsElapsed++;
+        score += 3;
+        updateUI();
+      }
+    }, 1000);
+  }
+
+  snake.unshift(head);
+  if (!ate) snake.pop();
+
+  // Check if snake accidentally ran into a wrong letter (no penalty, just pass through)
+  
+  updateUI();
+  draw();
+}
+
+// ── Draw ───────────────────────────────────────────────────────────────────────
+function draw() {
+  // Background
+  ctx.fillStyle = '#0c0c14';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grid dots
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  for (let x=0; x<COLS; x++) for (let y=0; y<ROWS; y++) {
+    if ((x+y) % 2 === 0) ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+  }
+
+  // Draw letters on board
+  Object.entries(letters).forEach(([ch, pos]) => {
+    const color = letterColors[ch];
+
+    ctx.font = `bold ${CELL-2}px 'Space Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = `rgba(${hexToRgb(color)},0.45)`;
+    ctx.fillText(ch, pos.x*CELL + CELL/2, pos.y*CELL + CELL/2 + 1);
+  });
+
+  // Draw snake
+  snake.forEach((seg, i) => {
+    const ch = ALPHABET[i];
+    const color = letterColors[ch] || '#00ff88';
+    const isHead = i === 0;
+
+    // Segment background
+    ctx.fillStyle = isHead ? '#00ff88' : `rgba(0,255,136,${Math.max(0.15, 0.7 - i*0.025)})`;
+    ctx.shadowBlur = isHead ? 12 : 4;
+    ctx.shadowColor = color;
+    roundRect(ctx, seg.x*CELL+1, seg.y*CELL+1, CELL-2, CELL-2, 3);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Letter on segment
+    ctx.font = `bold ${CELL-3}px 'Space Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = isHead ? '#0a0a0f' : 'rgba(0,0,0,0.7)';
+    ctx.fillText(ch, seg.x*CELL + CELL/2, seg.y*CELL + CELL/2 + 1);
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h);
+  ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r);
+  ctx.arcTo(x, y, x+r, y, r);
+  ctx.closePath();
+}
+
+function hexToRgb(color) {
+  // For hsl colors, just return a default
+  return '255,255,136';
+}
+
+// ── UI updates ─────────────────────────────────────────────────────────────────
+function updateUI() {
+  document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('timeDisplay').textContent = secondsElapsed + 's';
+  document.getElementById('snakeDisplay').textContent = ALPHABET.slice(0, snake.length);
+  document.getElementById('speedDisplay').textContent = Math.ceil(nextLetterIdx / 4) + 1;
+}
+
+function updateLocalBest(s) {
+  if (s > localBest) {
+    localBest = s;
+    localStorage.setItem('alphabetSnakeBest', s);
+    document.getElementById('localBest').textContent = localBest;
+  }
+}
+
+// ── End game ───────────────────────────────────────────────────────────────────
+function endGame() {
+  clearInterval(gameLoop);
+  clearInterval(timerLoop);
+
+  const reached = ALPHABET[nextLetterIdx - 1];
+  pendingSave = { score, reached };
+
+  document.getElementById('finalScore').textContent = score;
+  if (wrongLetterFlash) {
+    document.getElementById('reachedLetter').textContent = ALPHABET[nextLetterIdx - 1];
+    document.getElementById('gameOverMsg').innerHTML = `Du spiste <strong style="color:var(--accent2)">${wrongLetterFlash}</strong> — ville ha <strong style="color:var(--accent3)">${ALPHABET[nextLetterIdx]}</strong>!`;
+  } else {
+    document.getElementById('gameOverMsg').innerHTML = `Du kom til bokstav <span id="reachedLetter">${ALPHABET[nextLetterIdx - 1]}</span>`;
+  }
+  document.getElementById('gameOverOverlay').classList.remove('hidden');
+
+  draw();
+}
+
+// ── Pause ──────────────────────────────────────────────────────────────────────
+function togglePause() {
+  if (!gameRunning) return;
+  paused = !paused;
+  document.getElementById('pauseOverlay').classList.toggle('hidden', !paused);
+}
+window.togglePause = togglePause;
+
+// ── Overlays ───────────────────────────────────────────────────────────────────
+function hideAllOverlays() {
+  ['startOverlay','gameOverOverlay','pauseOverlay','winOverlay'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+  });
+}
+
+function showHighscore() {
+  document.getElementById('highscorePanel').classList.remove('hidden');
+  loadHighscores();
+}
+window.showHighscore = showHighscore;
+
+function closeHighscore() {
+  document.getElementById('highscorePanel').classList.add('hidden');
+}
+window.closeHighscore = closeHighscore;
+
+// ── Highscore ──────────────────────────────────────────────────────────────────
+async function loadHighscores() {
+  const tbody = document.getElementById('leaderboardBody');
+  const mini = document.getElementById('miniLeaderboard');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;"><span class="loading-text">Laster...</span></td></tr>';
+
+  // Try Firebase
+  let scores = null;
+  if (window._loadFromFirebase) {
+    scores = await window._loadFromFirebase();
+  }
+
+  if (!scores || scores.length === 0) {
+    // Use localStorage fallback
+    scores = JSON.parse(localStorage.getItem('alphabetSnakeScores') || '[]');
+    scores.sort((a,b) => b.score - a.score);
+    scores = scores.slice(0,10);
+  }
+
+  if (scores.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--dim)">Ingen poeng ennå – vær den første!</td></tr>';
+    mini.innerHTML = '<span style="color:var(--dim);font-size:0.6rem">Ingen ennå</span>';
     return;
   }
 
-  animFrame = requestAnimationFrame(growLoop);
+  const medals = ['🥇','🥈','🥉'];
+  tbody.innerHTML = scores.map((s, i) => `
+    <tr>
+      <td class="rank-num">${medals[i] || (i+1)}</td>
+      <td>${escHtml(s.name)}</td>
+      <td style="color:var(--accent)">${s.score}</td>
+      <td style="color:var(--dim)">${escHtml(s.reached || '?')}</td>
+    </tr>
+  `).join('');
+
+  mini.innerHTML = scores.slice(0,3).map((s,i) =>
+    `<span style="color:${i===0?'var(--accent3)':'var(--dim)'}">${medals[i]||''} ${escHtml(s.name)}: <strong style="color:var(--accent)">${s.score}</strong></span><br>`
+  ).join('');
 }
+window.loadHighscores = loadHighscores;
 
-function newQuestion() {
-  const a = Math.floor(Math.random() * 10) + 1;
-  const b = Math.floor(Math.random() * 10) + 1;
-  correctAnswer = a * b;
-  questionEl.textContent = `${a} × ${b}`;
+async function saveAndShowHighscore(source) {
+  const inputId = source === 'win' ? 'playerNameInputWin' : 'playerNameInput';
+  const name = document.getElementById(inputId).value.trim() || 'Anonym';
+  if (!pendingSave) { showHighscore(); return; }
 
-  const options = new Set([correctAnswer]);
-  while (options.size < 5) {
-    let wrong = correctAnswer + (Math.floor(Math.random() * 20) - 10);
-    if (wrong > 0 && wrong !== correctAnswer) options.add(wrong);
-  }
-  const shuffled = [...options].sort(() => Math.random() - 0.5);
+  // Save locally
+  const local = JSON.parse(localStorage.getItem('alphabetSnakeScores') || '[]');
+  local.push({ name, score: pendingSave.score, reached: pendingSave.reached, ts: Date.now() });
+  local.sort((a,b) => b.score - a.score);
+  localStorage.setItem('alphabetSnakeScores', JSON.stringify(local.slice(0,20)));
 
-  answersEl.innerHTML = '';
-  shuffled.forEach(val => {
-    const btn = document.createElement('button');
-    btn.className = 'answer-btn';
-    btn.textContent = val;
-    btn.onclick = () => handleAnswer(val, btn);
-    answersEl.appendChild(btn);
-  });
-}
-
-function handleAnswer(val, btn) {
-  if (!gameActive) return;
-  if (val === correctAnswer) {
-    btn.classList.add('correct');
-    solvedCount++;
-    correctVal.textContent = solvedCount;
-
-    if (solvedCount % 3 === 0) {
-      growSpeed = baseGrowSpeed * (1 + (solvedCount / 3) * 0.55);
-      updateSpeedDots();
-    }
-
-    currentRadius = 0;
-    circle.style.width = '0px';
-    circle.style.height = '0px';
-
-    setTimeout(() => newQuestion(), 300);
-  } else {
-    btn.classList.add('wrong');
-    setTimeout(() => gameOver('Du svarte feil!'), 400);
-  }
-}
-
-function updateSpeedDots() {
-  const level = Math.min(Math.floor(solvedCount / 3), 4);
-  for (let i = 1; i <= 5; i++) {
-    document.getElementById('dot' + i).classList.toggle('active', i <= level + 1);
-  }
-}
-
-function gameOver(reason) {
-  if (!gameActive) return;
-  gameActive = false;
-  cancelAnimationFrame(animFrame);
-  clearInterval(timerInterval);
-
-  const elapsed = (performance.now() - startTime) / 1000;
-  document.getElementById('gameover-reason').textContent = reason;
-  document.getElementById('go-time').innerHTML = `${elapsed.toFixed(1)}s <span>total tid</span>`;
-  document.getElementById('go-correct').innerHTML = `${solvedCount} <span>riktige svar</span>`;
-  document.getElementById('player-name').value = '';
-  document.getElementById('gameover-screen').style.display = 'flex';
-
-  window._lastScore = { time: elapsed, correct: solvedCount };
-}
-
-window.saveScore = async function() {
-  const name = document.getElementById('player-name').value.trim() || 'Anonym';
-  const { correct, time } = window._lastScore;
-
-  const btn = document.querySelector('#gameover-screen .btn-primary');
-  btn.textContent = 'Lagrer...';
-  btn.disabled = true;
-
-  // 1. Lagre til Firebase
-  try {
-    await fbSaveScore(name, correct, time);
-  } catch(e) {
-    console.error('Firebase save error:', e);
+  // Save to Firebase
+  if (window._saveToFirebase) {
+    await window._saveToFirebase(name, pendingSave.score, pendingSave.reached);
   }
 
-  // 2. Hent fersk liste fra Firebase (separat steg, som i alfabetslangen)
+  pendingSave = null;
+  showHighscore();
+}
+window.saveAndShowHighscore = saveAndShowHighscore;
+
+async function saveScore() {
+  if (!pendingSave) return;
+  const name = document.getElementById('playerNameInput').value.trim() || 'Anonym';
+  const local = JSON.parse(localStorage.getItem('alphabetSnakeScores') || '[]');
+  local.push({ name, score: pendingSave.score, reached: pendingSave.reached, ts: Date.now() });
+  local.sort((a,b) => b.score - a.score);
+  localStorage.setItem('alphabetSnakeScores', JSON.stringify(local.slice(0,20)));
+  if (window._saveToFirebase) await window._saveToFirebase(name, pendingSave.score, pendingSave.reached);
+  pendingSave = null;
+  document.getElementById('saveScoreSection').classList.add('hidden');
   await loadHighscores();
+}
+window.saveScore = saveScore;
 
-  btn.textContent = 'LAGRE & SE HIGHSCORE';
-  btn.disabled = false;
+function resetLocalBest() {
+  localBest = 0;
+  localStorage.removeItem('alphabetSnakeBest');
+  document.getElementById('localBest').textContent = 0;
+}
+window.resetLocalBest = resetLocalBest;
 
-  document.getElementById('gameover-screen').style.display = 'none';
-  document.getElementById('highscore-screen').style.display = 'flex';
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-async function loadHighscores(newEntry) {
-  const container = document.getElementById('hs-table-container');
-  container.innerHTML = '<p style="opacity:0.5;text-align:center;padding:16px;">Laster...</p>';
+// ── Expose to HTML ─────────────────────────────────────────────────────────────
+window.startGame = startGame;
 
-  try {
-    cachedScores = await fbGetScores();
-  } catch(e) {
-    console.error('Firebase read error:', e);
-  }
+// ── Initial draw (title screen) ────────────────────────────────────────────────
+(function drawTitle() {
+  ctx.fillStyle = '#0c0c14';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = `bold 14px 'Space Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // Scatter all letters decoratively
+  ALPHABET.split('').forEach((ch, i) => {
+    const x = (i % COLS) * CELL + CELL/2;
+    const y = Math.floor(i / COLS) * CELL * 4 + 60;
+    ctx.fillStyle = letterColors[ch];
+    ctx.globalAlpha = 0.3;
+    ctx.fillText(ch, (Math.random()*COLS|0)*CELL+CELL/2, (Math.random()*ROWS|0)*CELL+CELL/2);
+  });
+  ctx.globalAlpha = 1;
+})();
 
-  container.innerHTML = renderTable(cachedScores, newEntry || null);
-}
-
-window.restartGame = function() {
-  document.getElementById('highscore-screen').style.display = 'none';
-  currentRadius = 0;
-  circle.style.width = '0px';
-  circle.style.height = '0px';
-  window.startGame();
-}
+// Load mini leaderboard on startup
+setTimeout(loadHighscores, 1000);
 </script>
+
+
+
 </body>
 </html>
