@@ -502,6 +502,7 @@ canvas.height = ROWS * CELL;
 // ── Game state ─────────────────────────────────────────────────────────────────
 let snake, dir, nextDir, letters, score, nextLetterIdx, gameLoop, timerLoop, paused;
 let secondsElapsed = 0;
+let wrongLetterFlash = null;
 let gameRunning = false;
 let pendingSave = null;
 let localBest = parseInt(localStorage.getItem('alphabetSnakeBest') || '0');
@@ -560,6 +561,7 @@ function startGame() {
   paused = false;
   score = 0;
   secondsElapsed = 0;
+  wrongLetterFlash = null;
   nextLetterIdx = 1; // next to eat is 'B' (index 1)
 
   // Snake starts as ['A'] in the middle
@@ -642,6 +644,17 @@ function tick() {
 
   const nextTarget = ALPHABET[nextLetterIdx];
   const target = letters[nextTarget];
+
+  // Check if snake head hits ANY letter
+  const hitLetter = Object.entries(letters).find(([ch, pos]) => pos.x === head.x && pos.y === head.y);
+  if (hitLetter) {
+    const [hitCh] = hitLetter;
+    if (hitCh !== nextTarget) {
+      // Wrong letter eaten — game over!
+      wrongLetterFlash = hitCh;
+      endGame(); return;
+    }
+  }
 
   let ate = false;
   if (target && head.x === target.x && head.y === target.y) {
@@ -795,7 +808,12 @@ function endGame() {
   pendingSave = { score, reached };
 
   document.getElementById('finalScore').textContent = score;
-  document.getElementById('reachedLetter').textContent = reached;
+  if (wrongLetterFlash) {
+    document.getElementById('reachedLetter').textContent = ALPHABET[nextLetterIdx - 1];
+    document.getElementById('gameOverMsg').innerHTML = `Du spiste <strong style="color:var(--accent2)">${wrongLetterFlash}</strong> — ville ha <strong style="color:var(--accent3)">${ALPHABET[nextLetterIdx]}</strong>!`;
+  } else {
+    document.getElementById('gameOverMsg').innerHTML = `Du kom til bokstav <span id="reachedLetter">${ALPHABET[nextLetterIdx - 1]}</span>`;
+  }
   document.getElementById('gameOverOverlay').classList.remove('hidden');
 
   draw();
