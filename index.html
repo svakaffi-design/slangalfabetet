@@ -311,6 +311,10 @@
   <!-- Left panel -->
   <div class="side-panel">
     <div class="panel-box">
+      <div class="panel-label">Tid</div>
+      <div class="panel-value" id="timeDisplay">0s</div>
+    </div>
+    <div class="panel-box">
       <div class="panel-label">Poeng</div>
       <div class="panel-value" id="scoreDisplay">0</div>
     </div>
@@ -496,7 +500,8 @@ canvas.width = COLS * CELL;
 canvas.height = ROWS * CELL;
 
 // ── Game state ─────────────────────────────────────────────────────────────────
-let snake, dir, nextDir, letters, score, nextLetterIdx, gameLoop, paused;
+let snake, dir, nextDir, letters, score, nextLetterIdx, gameLoop, timerLoop, paused;
+let secondsElapsed = 0;
 let gameRunning = false;
 let pendingSave = null;
 let localBest = parseInt(localStorage.getItem('alphabetSnakeBest') || '0');
@@ -554,6 +559,7 @@ function startGame() {
   gameRunning = true;
   paused = false;
   score = 0;
+  secondsElapsed = 0;
   nextLetterIdx = 1; // next to eat is 'B' (index 1)
 
   // Snake starts as ['A'] in the middle
@@ -571,7 +577,15 @@ function startGame() {
 
   updateUI();
   clearInterval(gameLoop);
+  clearInterval(timerLoop);
   gameLoop = setInterval(tick, getSpeed());
+  timerLoop = setInterval(() => {
+    if (!paused && gameRunning) {
+      secondsElapsed++;
+      score += 3;
+      updateUI();
+    }
+  }, 1000);
 }
 
 function getSpeed() {
@@ -634,7 +648,7 @@ function tick() {
     // Correct letter eaten!
     ate = true;
     delete letters[nextTarget];
-    score += 100 + nextLetterIdx * 10;
+    score += 100;
     nextLetterIdx++;
 
     // Check win
@@ -642,6 +656,7 @@ function tick() {
       snake.unshift(head);
       score += 500; // bonus
       clearInterval(gameLoop);
+      clearInterval(timerLoop);
       gameRunning = false;
       document.getElementById('winScore').textContent = score;
       document.getElementById('winOverlay').classList.remove('hidden');
@@ -652,7 +667,15 @@ function tick() {
 
     // Speed up check
     clearInterval(gameLoop);
+    clearInterval(timerLoop);
     gameLoop = setInterval(tick, getSpeed());
+    timerLoop = setInterval(() => {
+      if (!paused && gameRunning) {
+        secondsElapsed++;
+        score += 3;
+        updateUI();
+      }
+    }, 1000);
   }
 
   snake.unshift(head);
@@ -749,6 +772,7 @@ function hexToRgb(color) {
 // ── UI updates ─────────────────────────────────────────────────────────────────
 function updateUI() {
   document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('timeDisplay').textContent = secondsElapsed + 's';
   document.getElementById('nextLetterDisplay').textContent = ALPHABET[nextLetterIdx] || '✓';
   document.getElementById('snakeDisplay').textContent = ALPHABET.slice(0, snake.length);
   document.getElementById('speedDisplay').textContent = Math.ceil(nextLetterIdx / 4) + 1;
@@ -765,8 +789,7 @@ function updateLocalBest(s) {
 // ── End game ───────────────────────────────────────────────────────────────────
 function endGame() {
   clearInterval(gameLoop);
-  gameRunning = false;
-  updateLocalBest(score);
+  clearInterval(timerLoop);
 
   const reached = ALPHABET[nextLetterIdx - 1];
   pendingSave = { score, reached };
