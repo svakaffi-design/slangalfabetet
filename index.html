@@ -318,10 +318,7 @@
       <div class="panel-label">Poeng</div>
       <div class="panel-value" id="scoreDisplay">0</div>
     </div>
-    <div class="panel-box">
-      <div class="panel-label">Neste bokstav</div>
-      <div class="next-letter" id="nextLetterDisplay">B</div>
-    </div>
+
     <div class="panel-box">
       <div class="panel-label">Slangen</div>
       <div class="snake-display" id="snakeDisplay">A</div>
@@ -777,7 +774,6 @@ function hexToRgb(color) {
 function updateUI() {
   document.getElementById('scoreDisplay').textContent = score;
   document.getElementById('timeDisplay').textContent = secondsElapsed + 's';
-  document.getElementById('nextLetterDisplay').textContent = ALPHABET[nextLetterIdx] || '✓';
   document.getElementById('snakeDisplay').textContent = ALPHABET.slice(0, snake.length);
   document.getElementById('speedDisplay').textContent = Math.ceil(nextLetterIdx / 4) + 1;
 }
