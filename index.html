@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>67TRIS</title>
+
+<style>
+body{
+  margin:0;
+  background:black;
+  overflow:hidden;
+  font-family:monospace;
+}
+
+.number{
+  position:fixed;
+  color:red;
+  font-weight:bold;
+  cursor:pointer;
+  user-select:none;
+  font-size:40px;
+}
+
+#overlay{
+  position:fixed;
+  inset:0;
+  background:black;
+  color:white;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  font-size:28px;
+  cursor:pointer;
+  z-index:30000;
+}
+
+#counter{
+  position:fixed;
+  top:15px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.85);
+  color:lime;
+  padding:10px 25px;
+  border:2px solid lime;
+  font-size:20px;
+  border-radius:10px;
+  z-index:20000;
+}
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <div>
+    <h1>67TRIS</h1>
+    <p>Trykk på tallene og se de formere seg!!!</p>
+    <p>Hvor mange klarer du å lage?</p>
+    <p style="margin-top:30px;font-size:18px;">(Klikk for å starte)</p>
+  </div>
+</div>
+
+<div id="counter">Antall tall på skjermen: 0</div>
+
+<script>
+let numbers = [];
+let ctx;
+let audioStarted = false;
+let gameStarted = false;
+
+const overlay = document.getElementById("overlay");
+const counter = document.getElementById("counter");
+
+overlay.onclick = startGame;
+
+function startGame(){
+  overlay.style.display="none";
+  gameStarted = true;
+
+  createNumber("6", window.innerWidth/2 - 60, window.innerHeight/2);
+  createNumber("7", window.innerWidth/2 + 60, window.innerHeight/2);
+
+  startMusic();
+  animate();
+}
+
+function createNumber(value,x,y){
+  const div = document.createElement("div");
+  div.className="number";
+  div.textContent=value;
+
+  div.style.left = x ? x+"px" : Math.random()*90+"%";
+  div.style.top = y ? y+"px" : Math.random()*90+"%";
+
+  div.vx = (Math.random()*2+1) * (Math.random()<0.5?-1:1);
+  div.vy = (Math.random()*2+1) * (Math.random()<0.5?-1:1);
+
+  div.onclick = multiply;
+
+  document.body.appendChild(div);
+  numbers.push(div);
+  updateCounter();
+}
+
+function multiply(){
+  const count = numbers.length;
+  for(let i=0;i<count;i++){
+    createNumber(Math.random()>0.5 ? "6":"7");
+  }
+}
+
+function updateCounter(){
+  counter.textContent = "Antall tall på skjermen: " + numbers.length;
+}
+
+function animate(){
+  if(!gameStarted) return;
+
+  numbers.forEach(n=>{
+    let x = n.offsetLeft;
+    let y = n.offsetTop;
+
+    const speedBoost = 1 + numbers.length*0.01;
+
+    x += n.vx * speedBoost;
+    y += n.vy * speedBoost;
+
+    if(x <= 0 || x >= window.innerWidth - n.offsetWidth){
+      n.vx *= -1;
+    }
+
+    if(y <= 0 || y >= window.innerHeight - n.offsetHeight){
+      n.vy *= -1;
+    }
+
+    n.style.left = x + "px";
+    n.style.top = y + "px";
+  });
+
+  requestAnimationFrame(animate);
+}
+
+function startMusic(){
+  if(audioStarted) return;
+  audioStarted = true;
+
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const tempo = 200;
+  const beat = 60/tempo;
+
+  const melody = [
+    659,494,523,587,
+    523,494,440,440,
+    523,659,587,523,
+    494,523,587,659
+  ];
+
+  let time = ctx.currentTime;
+
+  function loop(){
+    melody.forEach((freq,i)=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type="square";
+      osc.frequency.value=freq;
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      gain.gain.setValueAtTime(0.12,time+i*beat);
+      gain.gain.exponentialRampToValueAtTime(0.001,time+i*beat+beat);
+
+      osc.start(time+i*beat);
+      osc.stop(time+i*beat+beat);
+    });
+
+    time += melody.length*beat;
+    setTimeout(loop, melody.length*beat*1000);
+  }
+
+  loop();
+}
+</script>
+
+</body>
+</html>
